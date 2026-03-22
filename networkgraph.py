@@ -1,5 +1,6 @@
 import sys
 import random
+import numpy as np
 
 class Protein:
     def __init__(self, pID : str):
@@ -19,6 +20,7 @@ class Protein:
             else:
                 r -= score
         return ""
+
 
 class ProteinNetwork:
     def __init__(self, infile : str):
@@ -48,9 +50,31 @@ class ProteinNetwork:
         print(len(self.nodes[pID].links))
         print(self.nodes[pID].chooseRandomLink())
 
+    def getOrderedPIDs(self):
+        return sorted(self.nodes.keys())
+
+    def toAdjacencyMatrix(self):
+        proteins = self.getOrderedPIDs()
+        n = len(proteins)
+        array = np.empty((n, n))
+
+        for i in range(n):
+            protein1 = self.nodes.get(proteins[i])
+            for j in range(n):
+                score = protein1.links.get(proteins[j], 0)
+                array[i][j] = score
+        
+        #normalize values
+        array /= np.max(array)
+        return array 
+
+
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print(f"Usage: {sys.argv[0]} FILE_NAME")
     net = ProteinNetwork(sys.argv[1])
     net.printProteinLinks("4932.Q0010")
+    net.toAdjacencyMatrix()
     pass
