@@ -23,14 +23,18 @@ class Protein:
 
 
 class ProteinNetwork:
-    def __init__(self, infile : str):
+    def __init__(self, link_file : str, go_file : str):
         self.nodes = dict() # str -> protein
+        self.go = dict() # str -> set of GO terms
 
-        with open(infile, 'r') as file:
+        with open(link_file, 'r') as file:
             next(file)
             for line in file:
                 self._read_plink_file_line(line)
-                pass
+
+        with open(go_file, 'r') as file:
+            for line in file:
+                self._read_go_file_line(line)
 
     def _read_plink_file_line(self, line : str):
         p1, p2, score = line.split()
@@ -43,7 +47,14 @@ class ProteinNetwork:
         
         self.nodes[p1].addLink(p2, int(score))
         self.nodes[p2].addLink(p1, int(score))
-        pass
+    
+    def _read_go_file_line(self, line : str):
+        pid, category, go_term, _ = line.split("\t")
+        if not "Gene Ontology" in category:
+            return
+        if self.go.get(pid) is None:
+            self.go[pid] = set()
+        self.go[pid].add(go_term)
 
     def printProteinLinks(self, pID : str):
         print(self.nodes[pID].id)
@@ -52,6 +63,9 @@ class ProteinNetwork:
 
     def getOrderedPIDs(self):
         return sorted(self.nodes.keys())
+    
+    def getOrderedGoTerms(self):
+        return sorted(set(term for terms in self.go.values() for term in terms))
 
     def toAdjacencyMatrix(self):
         proteins = self.getOrderedPIDs()
@@ -68,13 +82,33 @@ class ProteinNetwork:
         array /= np.max(array)
         return array 
 
+    def getGoMatrix(self):
+        proteins = self.getOrderedPIDs()
+        go_terms = self.getOrderedGoTerms()
+        n = len(proteins)
+        m = len(go_terms)
 
+        array = np.empty((n, m))
 
+        for i in range(n):
+            protein1 = self.nodes.get(proteins[i])
+            for j in range(m):
+                go_term = go_terms[j]
+                if go_term in self.go.get(proteins[i], set()):
+                    array[i][j] = 1
+                else:
+                    array[i][j] = 0
+        return array
+
+    def getFullTrainingData(self):
+        return self.toAdjacencyMatrix(), self.getGoMatrix()
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print(f"Usage: {sys.argv[0]} FILE_NAME")
-    net = ProteinNetwork(sys.argv[1])
+    if len(sys.argv) < 3:
+        print(f"Usage: {sys.argv[0]} LINK_FILE GO_FILE")
+    link_file = sys.argv[1]
+    go_file = sys.argv[2]
+    net = ProteinNetwork(link_file, go_file)
     net.printProteinLinks("4932.Q0010")
-    net.toAdjacencyMatrix()
-    pass
+    adj, go = net.getFullTrainingData()
+    print(adj.shape, go.shape)
