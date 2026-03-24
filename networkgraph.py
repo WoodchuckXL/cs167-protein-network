@@ -1,6 +1,10 @@
 import sys
 import random
 import numpy as np
+import pandas as pd
+import os
+
+RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
 
 class Protein:
     def __init__(self, pID : str):
@@ -111,4 +115,14 @@ if __name__ == "__main__":
     net = ProteinNetwork(link_file, go_file)
     net.printProteinLinks("4932.Q0010")
     adj, go = net.getFullTrainingData()
-    print(adj.shape, go.shape)
+    
+    # Export to CSV for use elsewhere
+    # Include protein IDs as row and column labels
+    proteins = net.getOrderedPIDs()
+    go_terms = net.getOrderedGoTerms()
+    adj_df = pd.DataFrame(adj, index=proteins, columns=proteins)
+    go_df = pd.DataFrame(go, index=proteins, columns=go_terms)
+    
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+    adj_df.to_csv(os.path.join(RESULTS_DIR, "adjacency_matrix.csv"))
+    go_df.to_csv(os.path.join(RESULTS_DIR, "go_matrix.csv"))
