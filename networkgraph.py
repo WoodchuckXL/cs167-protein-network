@@ -4,6 +4,10 @@ import numpy as np
 import pandas as pd
 import os
 
+# DSD tools
+import glidetools.algorithm.dsd as dsdtool
+from scipy.spatial.distance import squareform, pdist
+
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
 
 class Protein:
@@ -60,10 +64,10 @@ class ProteinNetwork:
             self.go[pid] = set()
         self.go[pid].add(go_term)
 
-    def printProteinLinks(self, pID : str):
-        print(self.nodes[pID].id)
-        print(len(self.nodes[pID].links))
-        print(self.nodes[pID].chooseRandomLink())
+    # def printProteinLinks(self, pID : str):
+    #     print(self.nodes[pID].id)
+    #     print(len(self.nodes[pID].links))
+    #     print(self.nodes[pID].chooseRandomLink())
 
     def getOrderedPIDs(self):
         return sorted(self.nodes.keys())
@@ -78,13 +82,21 @@ class ProteinNetwork:
 
         for i in range(n):
             protein1 = self.nodes.get(proteins[i])
+            if protein1 is None:
+                continue
             for j in range(n):
                 score = protein1.links.get(proteins[j], 0)
                 array[i][j] = score
         
         #normalize values
-        array /= np.max(array)
+        # array /= np.max(array)
         return array 
+    
+    def getDSDMatrix(self, t:int=5):
+        dsdEmb = dsdtool.compute_dsd_embedding(self.toAdjacencyMatrix(), t, 1, True)
+        dsdDist = squareform(pdist(dsdEmb))
+
+        return dsdDist
 
     def getGoMatrix(self):
         proteins = self.getOrderedPIDs()
@@ -95,7 +107,7 @@ class ProteinNetwork:
         array = np.empty((n, m))
 
         for i in range(n):
-            protein1 = self.nodes.get(proteins[i])
+            # protein1 = self.nodes.get(proteins[i])
             for j in range(m):
                 go_term = go_terms[j]
                 if go_term in self.go.get(proteins[i], set()):
@@ -113,8 +125,8 @@ if __name__ == "__main__":
     link_file = sys.argv[1]
     go_file = sys.argv[2]
     net = ProteinNetwork(link_file, go_file)
-    net.printProteinLinks("4932.Q0010")
     adj, go = net.getFullTrainingData()
+    dsd = net.getDSDMatrix()
     
     # Export to CSV for use elsewhere
     # Include protein IDs as row and column labels
@@ -122,7 +134,9 @@ if __name__ == "__main__":
     go_terms = net.getOrderedGoTerms()
     adj_df = pd.DataFrame(adj, index=proteins, columns=proteins)
     go_df = pd.DataFrame(go, index=proteins, columns=go_terms)
+    dsd_df = pd.DataFrame(dsd, index=proteins, columns=proteins)
     
     os.makedirs(RESULTS_DIR, exist_ok=True)
     adj_df.to_csv(os.path.join(RESULTS_DIR, "adjacency_matrix.csv"))
     go_df.to_csv(os.path.join(RESULTS_DIR, "go_matrix.csv"))
+    dsd_df.to_csv(os.path.join(RESULTS_DIR, "dsd_matrix.csv"))
