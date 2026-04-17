@@ -10,6 +10,7 @@
 #   seaborn     - heatmap and statistical visualizations
 # =============================================================================
 
+import argparse
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -418,8 +419,17 @@ def main():
     # =========================================================================
     # PARAMETERS
     # =========================================================================
-    GO_PATH = "go_matrix.csv"
-    ADJACENCY_PATH = "adjacency_matrix_no_dsd.csv"
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--adj-path',
+                        default="./results/adjacency_matrix_no_dsd.csv",
+                        help='Path to adjacency matrix CSV file')
+    parser.add_argument('--go-path',
+                        default="./results/go_matrix.csv",
+                        help='Path to GO matrix CSV file')
+    args = parser.parse_args()
+
+    GO_PATH = args.go_path
+    ADJACENCY_PATH = args.adj_path
     OUTPUT_DIR = "results"
     MIN_POSITIVE = 2500
     MAX_POSITIVE = 10000
