@@ -18,3 +18,9 @@ Then to process the STRING data to get DSD output, adjacency matrix, and GO term
 
 Where the link and go entry files are both in the `data` folder. 
 This program results in three csv files in the `results` folder.
+
+To run the ML model on these csv files, run
+
+    % python3 NetworksML.py --adj-path {ADJACENCY_MATRIX_FILE} --go-path {GO_MATRIX_FILE}
+
+This creates descriptive statistics plots, accuracy and ROC curve plots, and a summary report in the `results` folder.
