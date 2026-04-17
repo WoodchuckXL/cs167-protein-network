@@ -23,6 +23,7 @@ from sklearn.metrics import roc_auc_score, roc_curve
 from sklearn.metrics import precision_score, recall_score
 from sklearn.svm import LinearSVC
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.model_selection import train_test_split
 import os
 
 import warnings
@@ -431,7 +432,7 @@ def main():
     GO_PATH = args.go_path
     ADJACENCY_PATH = args.adj_path
     OUTPUT_DIR = "results"
-    MIN_POSITIVE = 2500
+    MIN_POSITIVE = 500
     MAX_POSITIVE = 10000
     BINARIZE = True # DO NOT MAKE THIS FALSE
     BINARIZE_THRESHOLD = 0.30
@@ -462,6 +463,14 @@ def main():
     print("=" * 50)
     descriptive_stats(X, Y, output_dir=OUTPUT_DIR, top_n=TOP_N_CORR)
 
+    #train/test split
+    #80-20 split? i think this is fine for now idk
+    X_train, X_test, Y_train, Y_test = train_test_split(
+        X, Y, test_size=0.2, random_state=RANDOM_SEED
+    )
+    print(f"Training on {X_train.shape[0]} proteins.")
+    print(f"Training on {X_test.shape[0]} unseen proteins.")
+
     # =========================================================================
     # STEP 3: Train and select best model per GO term
     # =========================================================================
@@ -470,13 +479,25 @@ def main():
     print("=" * 50)
     go_terms = Y.columns.tolist()
     predict_fn, models, results = make_final_model(
-        X=X,
-        Y=Y,
+        X=X_train,
+        Y=Y_train,
         go_terms=go_terms,
         output_dir=OUTPUT_DIR,
         random_seed=RANDOM_SEED
     )
 
+    #print which model we chose to be best
+    print("\n"+"="*50)
+    print("SELECTED MODELS PER GO TERM")
+    print("="*50)
+    results_df=pd.DataFrame.from_dict(results, orient='index')
+    results_df=results_df.sort_values(by='cv_auroc',ascending=False)
+    for go_term, row in results_df.iterrows():
+        best_model=row['best_model_type']
+        score=row['cv_auroc']
+        print(f"{go_term:<15} | Selected: {best_model:<15} | CV AUROC: {score:.3f}")
+
+    results_df.to_csv(os.path.join(OUTPUT_DIR, "selected_models.csv"))
     # =========================================================================
     # STEP 4: Evaluate final model
     # =========================================================================
@@ -485,8 +506,8 @@ def main():
     print("=" * 50)
     summary = test_final_model(
         predict_fn=predict_fn,
-        X=X,
-        Y=Y,
+        X=X_test,
+        Y=Y_test,
         go_terms=go_terms,
         output_dir=OUTPUT_DIR
     )
