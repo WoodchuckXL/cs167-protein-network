@@ -481,7 +481,7 @@ def main():
     # STEP 4: Evaluate final model
     # =========================================================================
     print("\n" + "=" * 50)
-    print("STEP 5: Evaluating final model")
+    print("STEP 4: Evaluating final model")
     print("=" * 50)
     summary = test_final_model(
         predict_fn=predict_fn,
