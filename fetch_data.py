@@ -10,6 +10,7 @@ URLS = [
     "https://stringdb-downloads.org/download/protein.links.v12.0/4932.protein.links.v12.0.txt.gz",
     "https://stringdb-downloads.org/download/protein.links.detailed.v12.0/4932.protein.links.detailed.v12.0.txt.gz",
     "https://stringdb-downloads.org/download/protein.enrichment.terms.v12.0/4932.protein.enrichment.terms.v12.0.txt.gz",
+#    "https://stringdb-downloads.org/download/protein.enrichment.terms.v12.0/9606.protein.enrichment.terms.v12.0.txt.gz",
 #    "https://stringdb-downloads.org/download/protein.links.full.v12.0/9606.protein.links.full.v12.0.txt.gz",
     "https://stringdb-downloads.org/download/protein.links.full.v12.0/4932.protein.links.full.v12.0.txt.gz"
 ]
