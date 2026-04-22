@@ -8,6 +8,10 @@ import os
 import glidetools.algorithm.dsd as dsdtool
 from scipy.spatial.distance import squareform, pdist
 
+category_table = {'Molecular Function (Gene Ontology)': "GO:0003674",
+                   'Biological Process (Gene Ontology)': "GO:0008150",
+                   'Cellular Component (Gene Ontology)': "GO:0005575"}
+
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
 
 class Protein:
@@ -63,6 +67,8 @@ class ProteinNetwork:
         if self.go.get(pid) is None:
             self.go[pid] = set()
         self.go[pid].add(go_term)
+        if category_table[category] not in self.go[pid]:
+            self.go[pid].add(category_table[category])
 
     # def printProteinLinks(self, pID : str):
     #     print(self.nodes[pID].id)
@@ -92,8 +98,8 @@ class ProteinNetwork:
         # array /= np.max(array)
         return array 
     
-    def getDSDMatrix(self, t:int=5):
-        dsdEmb = dsdtool.compute_dsd_embedding(self.toAdjacencyMatrix(), t, 1, True)
+    def getDSDMatrix(self, t:int=5, normalized:bool=True):
+        dsdEmb = dsdtool.compute_dsd_embedding(self.toAdjacencyMatrix(), t, 1, normalized)
         dsdDist = squareform(pdist(dsdEmb))
 
         return dsdDist
